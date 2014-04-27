@@ -5,5 +5,5 @@ default["gitlab"]["installer"]["checksum"] = "afe7d99201c2"   # "afe7d99201c29ea
 
 # for your local machine, add the ip address of the VM in the host file, e.g.
 # 192.168.3.10   gitlab.islocal.com
-default['gitlab']['domain']              = 'isassa.com'
+default['gitlab']['domain']              = 'isassaabloy.com'
 default['gitlab']['hostname']            = 'git'
