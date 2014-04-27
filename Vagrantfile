@@ -42,12 +42,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
-  # Install the version of Chef by the Vagrant Omnibus
-  # version is :latest or "11.4.4"
   # Note:
-  # Using version "11.4.4" because that is the latest version
-  # AWS OpsWorks supports
-  config.omnibus.chef_version = "11.10"
+  # Using version "11.10" because that is the latest version
+  # AWS OpsWorks supports, and its support search like a chef server
+  config.omnibus.chef_version = "11.10.4-1"
 
    # Enabling the Berkshelf plugin. To enable this globally, add this configuration
    # option to your ~/.vagrant.d/Vagrantfile file
