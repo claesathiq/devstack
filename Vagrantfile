@@ -44,7 +44,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Note:
   # Using version "11.10" because that is the latest version
-  # AWS OpsWorks supports, and its support search like a chef server
+  # AWS OpsWorks supports, and it supports search like a chef server
   config.omnibus.chef_version = "11.10.4"
 
    # Enabling the Berkshelf plugin. To enable this globally, add this configuration
