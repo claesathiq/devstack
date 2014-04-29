@@ -1,91 +1,104 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# You can ask for more memory and cores when creating your Vagrant machine:
-# GITLAB_VAGRANT_MEMORY=2048 GITLAB_VAGRANT_CORES=4 vagrant up
-MEMORY = ENV['GITLAB_VAGRANT_MEMORY'] || '1536'
-CORES = ENV['GITLAB_VAGRANT_CORES'] || '2'
+def deep_merge(source_hash, new_hash)
+  source_hash.merge(new_hash) do |key, old, new|
+    if new.respond_to?(:blank) && new.blank?
+      old
+    elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
+      deep_merge(old, new)
+    elsif (old.kind_of?(Array) and new.kind_of?(Array))
+      old.concat(new).uniq
+    else
+      new
+    end
+  end
+end
 
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |global_config|
 
-  # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box     = "precise64"
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+  NODES_JSON = JSON.parse(Pathname(__FILE__).dirname.join('nodes', 'nodes.json').read)
+  # 'mysql' passwords are automatically generated in client mode, see also about using app_lb recipe for 'haproxy'
+  COMMON_JSON = JSON.parse(Pathname(__FILE__).dirname.join('nodes', 'common.json').read)
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
+  NODES_JSON.each_pair do |name, options|
 
-   config.vm.network :forwarded_port, guest: 3000, host: 3000
-   config.vm.network :forwarded_port, guest: 80, host: 8000
+    if options.delete('enabled')
 
-   config.vm.network :private_network, ip: "192.168.3.20"
-   
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+      global_config.vm.define name do |config|
 
-  config.vm.provider :virtualbox do |vb|
-    vb.name = "is_devstack_gitlab"
-    vb.customize ["modifyvm", :id, "--memory", MEMORY.to_i]
-    vb.customize ["modifyvm", :id, "--cpus", CORES.to_i]
+        config.vm.box = options.delete('box') || "precise64"
+        config.vm.box_url = options.delete('box_url') || "http://files.vagrantup.com/precise64.box"
 
-    if CORES.to_i > 1
-      vb.customize ["modifyvm", :id, "--ioapic", "on"]
-    end
-  end
+        config.vm.provider :virtualbox do |vb|
+          vb.name = "vagrant_#{name}"
+          vb.customize ["modifyvm", :id, "--memory", options.delete('box_memory') || 512]
 
-  # Note:
-  # Using version "11.10" because that is the latest version
-  # AWS OpsWorks supports, and it supports search like a chef server
-  config.omnibus.chef_version = "11.10.4"
+          cores = options.delete('box_cores') || 1
+          vb.customize ["modifyvm", :id, "--cpus", cores]
 
-   # Enabling the Berkshelf plugin. To enable this globally, add this configuration
-   # option to your ~/.vagrant.d/Vagrantfile file
-   config.berkshelf.enabled = true
+          if cores > 1
+            vb.customize ["modifyvm", :id, "--ioapic", "on"]
+          end
+        end
 
-  config.vm.provision "chef_solo" do |chef|
-    # chef.cookbooks_path = ["site-cookbooks", "cookbooks"]
-    # chef.roles_path = "roles"
-    # chef.data_bags_path = "data_bags"
+        config.vm.network :private_network, ip: options.delete('public_ip')
+        config.vm.hostname = options.delete('hostname')
 
-    chef.run_list = ["gitlab::default"]
+        # Detects vagrant-omnibus plugin
+        if Vagrant.has_plugin?('vagrant-omnibus')
+          # Using version "11.10" because that is the latest version
+          # AWS OpsWorks supports, and it supports search like a chef server
+          config.omnibus.chef_version = "11.10.4"
+        else
+          puts "FATAL: Vagrant-omnibus plugin not detected. Please install the plugin with\n       'vagrant plugin install vagrant-omnibus' from any other directory\n       before continuing."
+          exit
+        end
 
-    chef.json = {
-      gitlab: {
-        host: "git",
-        domain: "localhost.com"
-      }
-    }
-  end
+        # Detects vagrant-berkshelf plugin
+        if Vagrant.has_plugin?('berkshelf')
+          # The path to the Berksfile to use with Vagrant Berkshelf
+          # config.berkshelf.berksfile_path = './Berksfile'
 
-  # Enable provisioning with chef server, specifying the chef server URL,
-  # and the path to the validation key (relative to this Vagrantfile).
-  #
-  # The Opscode Platform uses HTTPS. Substitute your organization for
-  # ORGNAME in the URL and validation key.
-  #
-  # If you have your own Chef Server, use the appropriate URL, which may be
-  # HTTP instead of HTTPS depending on your configuration. Also change the
-  # validation key to validation.pem.
-  #
-  # config.vm.provision "chef_client" do |chef|
-  #   chef.chef_server_url = "https://api.opscode.com/organizations/ORGNAME"
-  #   chef.validation_key_path = "ORGNAME-validator.pem"
-  # end
-  #
-  # If you're using the Opscode platform, your validator client is
-  # ORGNAME-validator, replacing ORGNAME with your organization name.
-  #
-  # If you have your own Chef Server, the default validation client name is
-  # chef-validator, unless you changed the configuration.
-  #
-  #   chef.validation_client_name = "ORGNAME-validator"
+          # Enabling the Berkshelf plugin. To enable this globally, add this configuration
+          # option to your ~/.vagrant.d/Vagrantfile file
+          config.berkshelf.enabled = true
+        else
+          puts "FATAL: Vagrant-berkshelf plugin not detected. Please install the plugin with\n       'vagrant plugin install vagrant-berkshelf' from any other directory\n       before continuing."
+          exit
+        end
+
+
+
+        # Share an additional folder to the guest VM. The first argument is
+        # the path on the host to the actual folder. The second argument is
+        # the path on the guest to mount the folder. And the optional third
+        # argument is a set of non-required options.
+        # config.vm.synced_folder "../data", "/vagrant_data"
+
+        config.vm.provision "chef_solo" do |chef|
+
+          roles = options.delete('roles') || []
+          roles.each do |role|
+            chef.add_role(role)
+          end
+
+          chef.run_list = options.delete('run_list')
+
+          cjson = deep_merge(COMMON_JSON, options)
+          # puts(JSON.pretty_generate(cjson))
+          chef.json = cjson
+
+        end  #end chef
+
+      end #end define
+
+    end #end if enabled
+
+  end #end each_pair
+
 end

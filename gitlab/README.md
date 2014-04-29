@@ -47,10 +47,11 @@ Just include `gitlab` in your node's `run_list`:
 
 ```json
 {
-  "name":"my_node",
-  "run_list": [
-    "recipe[gitlab]"
-  ]
+  "run_list": ["recipe[gitlab::default]"],
+  "gitlab": {
+      "host": "git",
+      "domain": "localhost.com"
+  }
 }
 ```
 

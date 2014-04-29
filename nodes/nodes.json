@@ -1,0 +1,44 @@
+{
+    "git": {
+        "enabled": false,
+        "box": "precise64",
+        "box_url": "http://files.vagrantup.com/precise64.box",
+        "box_memory": 1024,
+        "box_cores": 2,
+        "hostname": "git",
+        "public_ip": "192.168.3.20",
+        "run_list": ["recipe[gitlab::default]"],
+        "gitlab": {
+            "host": "git",
+            "domain": "localhost.com"
+        }
+    },
+    "chef": {
+        "enabled": false,
+        "box": "opscode-ubuntu-12.04",
+        "box_url": "https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_provisionerless.box",
+        "box_memory": 1024,
+        "box_cores": 2,
+        "hostname": "chef",
+        "public_ip": "192.168.3.30",
+        "run_list": ["recipe[chef-serv::default]"],
+        "chef-server": {
+            "api_fqdn": "chef.localhost.com"
+        }
+    },
+    "docker": {
+        "enabled": true,
+        "box": "opscode-ubuntu-12.04",
+        "box_url": "https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_provisionerless.box",
+        "box_memory": 512,
+        "box_cores": 1,
+        "hostname": "docker",
+        "public_ip": "192.168.3.40",
+        "run_list": ["recipe[docker-reg::default]"],
+        "docker-registry": {
+            "revision": "0.6.8",
+            "server_name": "docker.localhost.com",
+            "secret-key": "fksldjriohl2kfsn2lh342kjfdeaslhkhfskjnhalknfk4232snfkldjfsdf3242"
+        }
+    }
+}
