@@ -19,10 +19,13 @@ Just include `chef-serv` in your node's `run_list`:
 
 ```json
 {
-  "run_list": ["recipe[chef-serv::default]"],
-  "chef-server": {
-      "api_fqdn": "chef.localhost.com"
-  }
+	"run_list": ["recipe[haproxy::default]"],
+  	"chef-server": {
+    	"api_fqdn": "chef.localhost.com"
+    	"nginx": {
+    		"enable_non_ssl": "true"
+  		}
+  	}
 }
 ```
 

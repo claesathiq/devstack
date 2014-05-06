@@ -1,0 +1,67 @@
+global
+  maxconn 4000
+  daemon
+  ca-base /etc/ssl
+  crt-base /etc/ssl
+
+defaults
+  mode http
+  timeout server 5s
+  timeout connect 5s
+  timeout client 5s
+
+# force ssl connections
+frontend http_frontend *:80
+  redirect scheme https if !{ ssl_fc }
+
+frontend https_frontend  
+  bind *:443 ssl crt certs/example.com.pem
+  mode tcp
+  timeout client 30m
+  default_backend web_server
+
+  reqadd X-Forwarded-Proto:\ https if { ssl_fc }
+  reqadd X-Proto:\ SSL if { ssl_fc }  
+
+  acl is_websocket hdr(upgrade) -i websocket
+  acl is_websocket hdr_beg(host) -i ws
+  acl is_websocket path_beg /socket.io/
+  use_backend web_socket_server if is_websocket
+
+  tcp-request inspect-delay 500ms
+  tcp-request content accept if HTTP
+  use_backend tcp_socket_server if !HTTP
+
+### NOTE: must host websockets on different port than 80 because some networks filter non-http traffic on port 80
+frontend ws_frontend 
+  bind *:8080 ssl crt certs/example.com.pem
+  mode tcp
+  timeout client 30m
+  default_backend tcp_socket_server
+
+frontend flash_policy_ipv4 *:843
+  mode tcp
+  default_backend tcp_socket_server
+
+backend tcp_socket_server
+  mode tcp
+  timeout connect 5s
+  timeout queue   5s
+  timeout server  30s
+  timeout tunnel  1h
+
+  server ws2 127.0.0.1:3334
+
+backend web_socket_server
+  option forwardfor
+  timeout connect  60s
+  timeout server  120s
+  timeout tunnel  1h
+
+  server ws3 127.0.0.1:3334
+
+backend web_server
+  option forwardfor
+
+  server ws4 127.0.0.1:3333
+  
