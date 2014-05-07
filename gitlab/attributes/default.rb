@@ -7,3 +7,5 @@ default["gitlab"]["installer"]["checksum"] = "afe7d99201c2"   # "afe7d99201c29ea
 # 192.168.3.10   gitlab.islocal.com
 default['gitlab']['domain']              = 'isassaabloy.com'
 default['gitlab']['hostname']            = 'git'
+
+deafult['gitlab']['hostname']			 = 'git.localhost.com'
