@@ -1,0 +1,86 @@
+global
+  maxconn 15000 # Max simultaneous connections from an upstream server
+  spread-checks 5 # Distribute health checks with some randomness
+  log 127.0.0.1 local0
+  log 127.0.0.1 local1 notice
+  # debug                 # Uncomment for verbose logging
+  ca-base /etc/ssl
+  crt-base /etc/ssl
+
+
+defaults # Apply to all services
+  log global
+  mode http
+  balance roundrobin
+  option abortonclose   # abort request if client closes output channel while waiting
+  option httpclose      # add "Connection:close" header if it is missing
+  option forwardfor     # insert x-forwarded-for header so that app servers can see both proxy and client IPs
+  option redispatch     # any server can handle any session
+  timeout client 60s
+  timeout connect 9s
+  timeout server 30s
+  timeout check 5s
+  stats enable
+  stats uri /statistics
+  stats realm Shared\ Tech\ Haproxy\ Statistics
+  stats auth admin:argus2014
+
+
+  frontend incoming
+    bind *:80
+    acl proxy hdr_dom(host) -i proxy.sharedtech.net
+    redirect location /statistics if  proxy
+    redirect scheme https if !{ ssl_fc }
+
+
+  frontend incoming_ssl
+    bind *:443 ssl crt certs/wildcard.sharedtech.net.pem
+    timeout client 30m
+
+    reqadd X-Forwarded-Proto:\ https if { ssl_fc }
+    reqadd X-Proto:\ SSL if { ssl_fc }  
+
+    acl git hdr_dom(host) -i git.sharedtech.net
+    acl chef hdr_dom(host) -i chef.sharedtech.net
+    acl nexus hdr_dom(host) -i nexus.sharedtech.net
+    acl docker hdr_dom(host) -i docker.sharedtech.net
+
+    use_backend git if git
+    use_backend chef if chef
+    use_backend nexus if nexus
+    use_backend docker if docker
+
+    default_backend web_app
+
+
+  backend git :80
+    # option httpchk /haproxy_health_check
+    # GitLab insists on redirecting using full URIs, so we need to rewrite http to https
+    rspirep ^Location:\s*http://(.+)    Location:\ https://\1   if { ssl_fc }
+    server git-server 10.0.1.83:80
+    # server git-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
+
+
+  backend chef :80
+    # option httpchk /haproxy_health_check
+    server chef-server 10.0.1.83:80
+    # server chef-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
+
+
+  backend nexus :80
+    # option httpchk /haproxy_health_check
+    server nexus-server 10.0.1.83:80
+    # server nexus-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
+
+
+  backend docker :80
+    # option httpchk /haproxy_health_check
+    server docker-server 10.0.1.83:80
+    # server docker-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
+
+
+  backend web_app :80
+    # option httpchk /haproxy_health_check
+    server webapp-server 10.0.1.83:8080
+    # server webapp-server 10.0.1.83:8080 check inter 5000 fastinter 1000 fall 1 weight 1
+
