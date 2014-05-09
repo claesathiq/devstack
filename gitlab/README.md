@@ -2,9 +2,11 @@ gitlab Cookbook
 ===============
 This cookbook installs GitLab using the Omnibus installer, see <a href="https://www.gitlab.com/downloads/">https://www.gitlab.com/downloads/</a>
 
+
 Requirements
 ------------
 Currently only support Ubuntu
+
 
 Default account
 ---------------
@@ -16,12 +18,26 @@ password: 5iveL!fe
 Add separate data vaolume for git repos
 ---------------------------------------
 
-Add an EBS volume, see this page
-stackoverflow.com/questions/11535617/add-ebs-to-ubuntu-ec2-instance
+# Attach new EBS volume to /dev/sdf
 
-Configure GitLab to use data area:
+mkfs.ext4 /dev/xvdf
+
+mkdir -m 000 /data
+echo "/dev/xvdf /data auto noatime 0 0" | tee -a /etc/fstab
+mount /data
+
+# After installing gitlab
+
+mkdir /data/git
+chown git:git /data/git
+chmod 0700 /data/git
 
 
+# Configure GitLab to use data area:
+
+# in '/etc/gitlab/gitlab.rb' set
+
+git_data_dir "/data/git"
 
 
 Make sure AWS instances get a FQDN
