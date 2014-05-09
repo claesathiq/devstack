@@ -32,12 +32,13 @@ directory "/etc/gitlab" do
 	subscribes :create, resources(:dpkg_package => "gitlab"), :immediately
 end
 
-
+# Make sure FQDN is set before running this
 template '/etc/gitlab/gitlab.rb' do
 	source 'gitlab.erb'
 	mode 0644
 	variables(
-		:gitlab_host  => "#{node.gitlab.hostname}.#{node.gitlab.domain}"
+		:gitlab_host  => "#{node.gitlab.hostname}.#{node.gitlab.domain}",
+		:gitlab_data_dir  => "#{node.gitlab.data_dir}"
 	)
 	action :nothing
 	subscribes :create, resources(:directory => "/etc/gitlab"), :immediately

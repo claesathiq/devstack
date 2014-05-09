@@ -22,28 +22,28 @@ defaults # Apply to all services
   timeout check 5s
   stats enable
   stats uri /statistics
-  stats realm Shared\ Tech\ Haproxy\ Statistics
-  stats auth admin:argus2014
+  stats realm <%= @stats_title %>
+  stats auth <%= @admin_user %>:<%= @admin_password %>
 
 
   frontend incoming
     bind *:80
-    acl proxy hdr_dom(host) -i proxy.sharedtech.net
+    acl proxy hdr_dom(host) -i proxy.<%= @gdomain %>
     redirect location /statistics if  proxy
     redirect scheme https if !{ ssl_fc }
 
 
   frontend incoming_ssl
-    bind *:443 ssl crt certs/wildcard.sharedtech.net.pem
+    bind *:443 ssl crt certs/wildcard.<%= @gdomain %>.pem
     timeout client 30m
 
     reqadd X-Forwarded-Proto:\ https if { ssl_fc }
     reqadd X-Proto:\ SSL if { ssl_fc }  
 
-    acl git hdr_dom(host) -i git.sharedtech.net
-    acl chef hdr_dom(host) -i chef.sharedtech.net
-    acl nexus hdr_dom(host) -i nexus.sharedtech.net
-    acl docker hdr_dom(host) -i docker.sharedtech.net
+    acl git hdr_dom(host) -i git.<%= @gdomain %>
+    acl chef hdr_dom(host) -i chef.<%= @gdomain %>
+    acl nexus hdr_dom(host) -i nexus.<%= @gdomain %>
+    acl docker hdr_dom(host) -i docker.<%= @gdomain %>
 
     use_backend git if git
     use_backend chef if chef
