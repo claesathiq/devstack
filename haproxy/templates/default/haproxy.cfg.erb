@@ -56,18 +56,22 @@ defaults # Apply to all services
 
 
   backend git :80
+    errorfile 503 /etc/haproxy/errorfiles/git503.http
     server git-server 10.0.1.83:80
 
 
   backend chef :80
+    errorfile 503 /etc/haproxy/errorfiles/chef503.http
     server chef-server 10.0.1.83:80
 
 
   backend nexus :80
+    errorfile 503 /etc/haproxy/errorfiles/nexus503.http
     server nexus-server 10.0.1.83:80
 
 
   backend docker :80
+    errorfile 503 /etc/haproxy/errorfiles/docker503.http
     server docker-server 10.0.1.83:80
 
 

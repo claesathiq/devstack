@@ -99,6 +99,22 @@ directory "/etc/haproxy" do
    action :create
 end
 
+directory "/etc/haproxy/errorfiles" do
+   owner "root"
+   group "root"
+   mode "0755"
+   action :create
+end
+
+$w(git503.http chef503.http nexus503.http docker503.http).each do |errorFile|
+  cookbook_file "/etc/haproxy/errorfiles/#{errorFile}" do
+    source errorFile
+    owner "root"
+    group "root"
+    mode "0644"
+  end
+end
+
 service "haproxy" do
    supports :status => true, :restart => true, :start => true, :stop => true, :reload => true
    action :nothing
