@@ -11,6 +11,13 @@ user: admin
 password: p@ssw0rd1
 
 
+Debian package
+--------------
+
+# https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.12-1.ubuntu.12.04_amd64.deb
+
+
+
 Backup
 ------
 

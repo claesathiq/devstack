@@ -1,4 +1,17 @@
 {
+    "proxy": {
+        "enabled": true,
+        "box": "precise64",
+        "box_url": "http://files.vagrantup.com/precise64.box",
+        "box_memory": 512,
+        "box_cores": 1,
+        "hostname": "proxy",
+        "public_ip": "192.168.3.10",
+        "run_list": ["recipe[haproxy::default]"],
+        "haproxy": {
+            "domain": "localhost.com"
+        }
+    },
     "git": {
         "enabled": false,
         "box": "precise64",
@@ -27,7 +40,7 @@
         }
     },
     "docker": {
-        "enabled": true,
+        "enabled": false,
         "box": "opscode-ubuntu-12.04",
         "box_url": "https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_provisionerless.box",
         "box_memory": 512,

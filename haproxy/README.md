@@ -40,6 +40,32 @@ usermod -G haproxy haproxy
 update-rc.d haproxy defaults
 
 
+
+Health checks
+-------------
+
+Currently no health chekcs are configured, but when/if they are, it could look like this
+
+  backend git :80
+    option httpchk /haproxy_health_check
+    server git-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
+
+
+Serf
+----
+
+Eventually Serf will be used to manage the cluster
+
+A simple script will be developed that adds/rmoves something like this from /etc/haproxy/haproxy.cfg
+
+  backend ${NODE_ROLE} :80
+     server ${NODE_ROLE}-server ${NODE_IP}:80
+
+then issues
+
+	service haproxy reload
+
+
 Usage
 -----
 #### haproxy::default
@@ -49,9 +75,9 @@ Just include `haproxy` in your node's `run_list`:
 
 ```json
 {
-	"run_list": ["recipe[haproxy::default]"],
+	"run_list": ["recipe[haproxy::default]"]
   	"haproxy": {
-    	"setting": "value"
+    	"domain": "localhost.com"
   	}
 }
 ```

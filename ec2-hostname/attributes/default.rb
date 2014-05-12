@@ -1,2 +1,1 @@
-
-default['ec2-hostname']['domain'] = 'sharedtech.net'
+default['ec2-hostname']['domain'] = 'st.assaabloy.net'

@@ -28,22 +28,24 @@ defaults # Apply to all services
 
   frontend incoming
     bind *:80
-    acl proxy hdr_dom(host) -i proxy.<%= @gdomain %>
+    acl proxy hdr_dom(host) -i proxy.<%= @domain %>
     redirect location /statistics if  proxy
     redirect scheme https if !{ ssl_fc }
 
 
   frontend incoming_ssl
-    bind *:443 ssl crt certs/wildcard.<%= @gdomain %>.pem
+    bind *:443 ssl crt certs/wildcard.<%= @domain %>.pem
     timeout client 30m
 
     reqadd X-Forwarded-Proto:\ https if { ssl_fc }
-    reqadd X-Proto:\ SSL if { ssl_fc }  
+    reqadd X-Proto:\ SSL if { ssl_fc }
 
-    acl git hdr_dom(host) -i git.<%= @gdomain %>
-    acl chef hdr_dom(host) -i chef.<%= @gdomain %>
-    acl nexus hdr_dom(host) -i nexus.<%= @gdomain %>
-    acl docker hdr_dom(host) -i docker.<%= @gdomain %>
+    rspirep ^Location:\s*http://(.+)    Location:\ https://\1   if { ssl_fc }
+
+    acl git hdr_dom(host) -i git.<%= @domain %>
+    acl chef hdr_dom(host) -i chef.<%= @domain %>
+    acl nexus hdr_dom(host) -i nexus.<%= @domain %>
+    acl docker hdr_dom(host) -i docker.<%= @domain %>
 
     use_backend git if git
     use_backend chef if chef
@@ -54,33 +56,21 @@ defaults # Apply to all services
 
 
   backend git :80
-    # option httpchk /haproxy_health_check
-    # GitLab insists on redirecting using full URIs, so we need to rewrite http to https
-    rspirep ^Location:\s*http://(.+)    Location:\ https://\1   if { ssl_fc }
     server git-server 10.0.1.83:80
-    # server git-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
 
 
   backend chef :80
-    # option httpchk /haproxy_health_check
     server chef-server 10.0.1.83:80
-    # server chef-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
 
 
   backend nexus :80
-    # option httpchk /haproxy_health_check
     server nexus-server 10.0.1.83:80
-    # server nexus-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
 
 
   backend docker :80
-    # option httpchk /haproxy_health_check
     server docker-server 10.0.1.83:80
-    # server docker-server 10.0.1.83:80 check inter 5000 fastinter 1000 fall 1 weight 1
 
 
   backend web_app :80
-    # option httpchk /haproxy_health_check
     server webapp-server 10.0.1.83:8080
-    # server webapp-server 10.0.1.83:8080 check inter 5000 fastinter 1000 fall 1 weight 1
 

@@ -1,4 +1,7 @@
 
+
+
+
 directory "/usr/local/ec2" do
 	owner "root"
 	group "root"
@@ -12,7 +15,7 @@ template "/usr/local/ec2/ec2-hostname.sh" do
 	group "root"
 	mode "0744"
 	variables(
-		:domain => node['ec2-hostname']['domain']
+		:domain => node['bootstrap']['domain']
 	)
 end
 

@@ -46,6 +46,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |global_config|
           end
         end
 
+        config.vm.provision "shell", path: "nodes/link_guest_addons.sh"
+
         config.vm.network :private_network, ip: options.delete('public_ip')
         config.vm.hostname = options.delete('hostname')
 

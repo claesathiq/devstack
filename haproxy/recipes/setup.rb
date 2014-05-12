@@ -1,5 +1,5 @@
 #
-# Cookbook Name:: chef-serv
+# Cookbook Name:: haproxy
 # Recipe:: setup
 #
 # Copyright 2014, ASSA ABLOY AB

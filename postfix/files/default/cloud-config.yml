@@ -1,0 +1,40 @@
+#cloud-config
+
+apt_update: true
+
+#apt_upgrade: true
+
+packages:
+ -- curl
+
+ fixroutingsilliness:
+- &fix_routing_silliness |
+   public_ipv4=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+   ifconfig eth0:0 $public_ipv4 up
+
+
+
+   configchef:
+   -- &configchef |
+   echo "deb http://apt.opscode.com/ precise-0.10 main" | sudo tee /etc/apt/sources.list.d/opscode.list
+   apt-get update
+   curl http://apt.opscode.com/packages@opscode.com.gpg.key | sudo apt-key add -
+   echo "chef chef/chef_server_url string http://ec2-54-218-102-48.us-west-2.compute.amazonaws.com:4000" | sudo debconf-set-selections && sudo apt-get install chef -y --force-yes
+   wget http://sourceforge.net/projects/s3tools/files/s3cmd/1.5.0-alpha3/s3cmd-1.5.0-alpha3.tar.gz
+   tar xvfz s3cmd-1.5.0-alpha3.tar.gz
+   cd s3cmd-1.5.0-alpha3/
+   cat >s3cfg <<EOM
+   [default]
+   access_key =
+   secret_key =
+   security_token =
+   EOM
+   ./s3cmd --config /s3cmd-1.5.0-alpha3/s3cfg ls s3://cloudsec/
+   ./s3cmd --config /s3cmd-1.5.0-alpha3/s3cfg --force get s3://cloudsec/client.rb /etc/chef/client.rb
+   ./s3cmd --config /s3cmd-1.5.0-alpha3/s3cfg --force get s3://cloudsec/validation.pem /etc/chef/validation.pem
+   chef-client
+
+   runcmd:
+   -- [ sh, -c, *fix_routing_silliness ]
+   -- [ sh, -c, *configchef]
+   -- touch /tmp/done
