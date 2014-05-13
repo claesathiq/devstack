@@ -106,7 +106,7 @@ directory "/etc/haproxy/errorfiles" do
    action :create
 end
 
-$w(git503.http chef503.http nexus503.http docker503.http).each do |errorFile|
+%w(git503.http chef503.http nexus503.http docker503.http).each do |errorFile|
   cookbook_file "/etc/haproxy/errorfiles/#{errorFile}" do
     source errorFile
     owner "root"
